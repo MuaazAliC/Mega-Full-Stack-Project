@@ -37,6 +37,6 @@ router.post("/refresh-token", RefreshAccessToken);
 router.post("/send-password-otp", sendPasswordResetOtp);
 router.post("/verify-password-otp", verifyPasswordResetOtp);
 router.post("/login", loginUser);
-router.patch("/update-password", updatePassword);
+router.post("/update-password", updatePassword);
 
 export default router;
