@@ -32,11 +32,45 @@ const generateAccessAndRefreshToken = async (userId) => {
 const registerUser = asynHandler(async (req, res) => {
   const { FullName, email, userName, password } = req.body;
 
- 
+  
   if (![FullName, email, userName, password].every(Boolean)) {
     return res
       .status(400)
       .json(new ApiError(400, "FullName, email, userName, and password are required."));
+  }
+
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json(new ApiError(400, "Please provide a valid email address."));
+  }
+
+
+  const usernameRegex = /^[a-zA-Z0-9_]{3,}$/;
+  if (!usernameRegex.test(userName)) {
+    return res.status(400).json(
+      new ApiError(
+        400,
+        "Username must be at least 3 characters long and contain only letters, numbers, or underscores (no spaces)."
+      )
+    );
+  }
+
+
+  function validatePasswordDetailed(pwd) {
+    const errors = [];
+    if (pwd.length < 8) errors.push("at least 8 characters");
+    if (!/[a-z]/.test(pwd)) errors.push("one lowercase letter (a-z)");
+    if (!/[A-Z]/.test(pwd)) errors.push("one uppercase letter (A-Z)");
+    if (!/\d/.test(pwd)) errors.push("one digit (0-9)");
+    if (!/[^\w\s]/.test(pwd)) errors.push("one special character (e.g. !@#$%)");
+    return errors;
+  }
+
+  const pwdErrors = validatePasswordDetailed(password);
+  if (pwdErrors.length) {
+    const msg = `Password must contain ${pwdErrors.join(", ")}.`;
+    return res.status(400).json(new ApiError(400, msg));
   }
 
   
@@ -45,9 +79,9 @@ const registerUser = asynHandler(async (req, res) => {
     return res.status(401).json(new ApiError(401, "Email not verified. Please verify OTP first."));
   }
 
-  
+
   const existedUser = await user.findOne({
-    $or: [{ userName }, { email }],
+    $or: [{ userName: userName.toLowerCase() }, { email }],
   });
 
   if (existedUser) {
@@ -57,11 +91,11 @@ const registerUser = asynHandler(async (req, res) => {
   }
 
   console.log("Proceeding with user registration...");
-  
+
   const { avatarUrl, coverImageUrl } = await uploadUserImages(req, res);
   console.log("Avatar URL:", avatarUrl);
 
-  
+
   const newUser = await user.create({
     FullName,
     Avatar: avatarUrl,
@@ -69,7 +103,7 @@ const registerUser = asynHandler(async (req, res) => {
     email,
     password,
     userName: userName.toLowerCase(),
-    isVerified: true, 
+    isVerified: true,
   });
 
   const createdUser = await user
@@ -80,13 +114,15 @@ const registerUser = asynHandler(async (req, res) => {
     throw new ApiError(500, "Something went wrong while registering the user.");
   }
 
- 
+  
   otpStore.delete(email);
 
+  
   return res
     .status(201)
     .json(new Apiresponse(201, createdUser, "User registered successfully"));
 });
+
 
 
 const loginUser = asynHandler(async (req, res) => {
