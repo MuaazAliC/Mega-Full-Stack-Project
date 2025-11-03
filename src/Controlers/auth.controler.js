@@ -10,9 +10,7 @@ dotenv.config();
 
 export const otpStore = new Map();
 
-/* =========================
-   SEND PASSWORD RESET OTP
-========================= */
+
 export const sendPasswordResetOtp = async (req, res) => {
   try {
     const { email } = req.body;
@@ -80,9 +78,7 @@ export const sendPasswordResetOtp = async (req, res) => {
   }
 };
 
-/* =========================
-   VERIFY PASSWORD RESET OTP
-========================= */
+
 export const verifyPasswordResetOtp = async (req, res) => {
   try {
     const { email, otp } = req.body;
@@ -113,9 +109,7 @@ export const verifyPasswordResetOtp = async (req, res) => {
   }
 };
 
-/* =========================
-   UPDATE PASSWORD
-========================= */
+
 export const updatePassword = async (req, res) => {
   try {
     const { email, newPassword } = req.body;
