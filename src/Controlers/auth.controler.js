@@ -109,35 +109,63 @@ export const verifyPasswordResetOtp = async (req, res) => {
   }
 };
 
-
 export const updatePassword = async (req, res) => {
   try {
     const { email, newPassword } = req.body;
 
-    if (!email || !newPassword)
+    if (!email || !newPassword) {
       return res
         .status(400)
-        .json(new ApiError(400, "Email and new password required"));
+        .json(new ApiError(400, "Email and new password are required."));
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res
+        .status(400)
+        .json(new ApiError(400, "Please provide a valid email address."));
+    }
+
+    function validatePasswordDetailed(pwd) {
+      const errors = [];
+      if (pwd.length < 8) errors.push("at least 8 characters");
+      if (!/[a-z]/.test(pwd)) errors.push("one lowercase letter (a-z)");
+      if (!/[A-Z]/.test(pwd)) errors.push("one uppercase letter (A-Z)");
+      if (!/\d/.test(pwd)) errors.push("one digit (0-9)");
+      if (!/[^\w\s]/.test(pwd)) errors.push("one special character (e.g. !@#$%)");
+      return errors;
+    }
+
+    const pwdErrors = validatePasswordDetailed(newPassword);
+    if (pwdErrors.length) {
+      const msg = `Password must contain ${pwdErrors.join(", ")}.`;
+      return res.status(400).json(new ApiError(400, msg));
+    }
 
     const stored = otpStore.get(email);
-    if (!stored || !stored.verified)
+    if (!stored || !stored.verified) {
       return res
         .status(400)
-        .json(new ApiError(400, "OTP not verified or expired"));
-
+        .json(new ApiError(400, "OTP not verified or expired."));
+    }
+    
     const User = await user.findOne({ email });
-    if (!User)
-      return res.status(404).json(new ApiError(404, "User not found"));
-
+    if (!User) {
+      return res.status(404).json(new ApiError(404, "User not found."));
+    }
+   
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-
     await user.updateOne({ email }, { $set: { password: hashedPassword } });
-    otpStore.delete(email);
 
+    otpStore.delete(email);
+   
     return res
       .status(200)
-      .json(new Apiresponse(200, "Password updated successfully"));
+      .json(new Apiresponse(200, {}, "Password updated successfully."));
   } catch (error) {
-    return res.status(500).json(new ApiError(500, error.message));
+    console.error("Error updating password:", error);
+    return res
+      .status(500)
+      .json(new ApiError(500, error.message || "Something went wrong."));
   }
 };
