@@ -17,7 +17,7 @@ import{
 } from "../Controlers/auth.controler.js";
 import { upload } from "../Middlewears/multer.middlewear.js";
 import { verifyJWT } from "../Middlewears/auth.middlewear.js";
-
+import { sendNotification } from "../Controlers/pustnotification.controler.js";
 const router = Router();
 
 router.post("/send-otp", sendOtp);
@@ -38,5 +38,6 @@ router.post("/send-password-otp", sendPasswordResetOtp);
 router.post("/verify-password-otp", verifyPasswordResetOtp);
 router.post("/login", loginUser);
 router.post("/update-password", updatePassword);
+router.post("/send-notification", sendNotification);
 
 export default router;
