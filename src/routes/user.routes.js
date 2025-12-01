@@ -18,7 +18,6 @@ import{
 import { upload } from "../Middlewears/multer.middlewear.js";
 import { verifyJWT } from "../Middlewears/auth.middlewear.js";
 import { saveSubscription ,
-         sendNotification,
          sendNotificationToAll
  } from "../Controlers/pustnotification.controler.js";
 const router = Router();
@@ -43,6 +42,6 @@ router.post("/login", loginUser);
 router.post("/update-password", updatePassword);
 router.post("/save-subscription", saveSubscription);
 router.post("/send-notification-to-all", sendNotificationToAll);
-router.post("/send-notification", sendNotification);
+
 
 export default router;

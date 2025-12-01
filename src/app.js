@@ -1,28 +1,33 @@
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-const app=express();
-import  router from './routes/user.routes.js';
-app.use(cors({
-    origin: process.env.CORS_ORIGIN,
-    credentials : true,
+import router from './routes/user.routes.js';
 
+const app = express();
+
+app.use(cors({
+  origin: "http://localhost:3000",
+  credentials: true,
+  methods: ['GET','POST','PUT','DELETE'],
+  allowedHeaders: ['Content-Type','Authorization']
 }));
 
-app.use(express.json({  limit : '10mb' }));
-app.use(express.urlencoded({ extended:true,  limit : '10mb' }));
+
+
+
+// Body parser
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Cookies
+app.use(cookieParser());
+
+// Serve static files (for sw.js)
 app.use(express.static('public'));
-app.use(cookieParser())
 
-//routes
+// Routes
+app.use("/api/v1", router);
 
-// import router, { abc } from "./routes/user.routes.js"
-
-//routes decleration
-
-app.use("/api/v1/users",router)
-// http://localhost:8000/api/v1/users/register
-
-export {app};
+export { app };
 
 

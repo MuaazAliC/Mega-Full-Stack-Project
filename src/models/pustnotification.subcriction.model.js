@@ -1,13 +1,11 @@
-
 import mongoose from "mongoose";
 
-const subscriptionSchema = new mongoose.Schema({
+const PushSubscriptionSchema = new mongoose.Schema({
   endpoint: { type: String, required: true, unique: true },
   keys: {
-    p256dh: { type: String, required: true },
-    auth: { type: String, required: true },
-  },
-  userId: { type: String }, 
-});
+    p256dh: { type: String },
+    auth: { type: String }
+  }
+}, { timestamps: true });
 
-export default mongoose.model("Subscription", subscriptionSchema);
+export default mongoose.model("PushSubscription", PushSubscriptionSchema);

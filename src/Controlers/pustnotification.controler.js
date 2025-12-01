@@ -1,8 +1,7 @@
 import asyncHandler from "express-async-handler";
 import webpush from "web-push";
 import dotenv from "dotenv";
-import Subscription from "../models/pustnotification.subcriction.model.js"; 
-
+import PushSubscription from "../models/pustnotification.subcriction.model.js";
 
 dotenv.config();
 
@@ -12,42 +11,35 @@ webpush.setVapidDetails(
   process.env.VAPID_PRIVATE_KEY
 );
 
-// Save subscription in DB
-const saveSubscription = asyncHandler(async (req, res) => {
+export const saveSubscription = asyncHandler(async (req, res) => {
   const subscription = req.body.subscription;
-  if (!subscription) {
-    res.status(400);
-    throw new Error("Subscription object is required");
-  }
+  if (!subscription) return res.status(400).json({ error: "Subscription required" });
 
-  const exists = await Subscription.findOne({ endpoint: subscription.endpoint });
+  const exists = await PushSubscription.findOne({ endpoint: subscription.endpoint });
   if (!exists) {
-    await Subscription.create(subscription);
+    await PushSubscription.create(subscription);
   }
 
   res.status(201).json({ success: true, message: "Subscribed successfully" });
 });
 
-// Send notification to a single subscription
-const sendNotification = asyncHandler(async (subscription, title, message) => {
-  const payload = JSON.stringify({ title, message });
-
+const sendNotificationToSubscription = async (subscription, payload) => {
   try {
-    await webpush.sendNotification(subscription, payload);
+    await webpush.sendNotification(subscription, JSON.stringify(payload));
   } catch (err) {
-    console.error("Error sending push notification:", err);
-    // If invalid subscription, remove it from DB
-    await Subscription.deleteOne({ endpoint: subscription.endpoint });
+    console.error("Failed to send notification:", err);
+    await PushSubscription.deleteOne({ endpoint: subscription.endpoint });
   }
-});
+};
 
-// Send notification to all subscribed users
-const sendNotificationToAll = asyncHandler(async (title, message) => {
-  const subscriptions = await Subscription.find();
-  const promises = subscriptions.map((sub) =>
-    sendNotification(sub, title, message)
-  );
-  await Promise.all(promises);
-});
+export const sendNotificationToAll = asyncHandler(async (req, res) => {
+  const { title, message } = req.body;
+  if (!title || !message) return res.status(400).json({ error: "Title and message required" });
 
-export { saveSubscription, sendNotification, sendNotificationToAll };
+  const subscriptions = await PushSubscription.find();
+  const payload = { title, message };
+
+  await Promise.all(subscriptions.map(sub => sendNotificationToSubscription(sub, payload)));
+
+  res.status(200).json({ success: true, message: "Notifications sent" });
+});
